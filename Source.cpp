@@ -244,3 +244,213 @@ int main() {
 	}
 	return 0;
 }
+
+
+
+
+
+vlm::
+#define _CRT_SECURE_NO_WARNINGS
+#include<iostream>
+using namespace std;
+#define SIZE 10000
+typedef struct node {
+	int h, ix, iy;
+}node;
+node arr[SIZE];
+int sz;
+int mvx[] = { 0, 0, 1, -1 };
+int mvy[] = { 1, -1, 0, 0 };
+void swap(int idx, int par) {
+	int z = arr[idx].h;
+	arr[idx].h = arr[par].h;
+	arr[par].h = z;
+	z = arr[idx].ix;
+	arr[idx].ix = arr[par].ix;
+	arr[par].ix = z;
+	z = arr[idx].iy;
+	arr[idx].iy = arr[par].iy;
+	arr[par].iy = z;
+	return;
+}
+void percolateDown(int idx) {
+	int smallest = idx;
+	int left = 2 * idx + 1;
+	int right = 2 * idx + 2;
+	if (left < sz && arr[left].h < arr[smallest].h)
+		smallest = left;
+	if (right < sz && arr[right].h < arr[smallest].h)
+		smallest = right;
+	if (idx != smallest) {
+		swap(idx, smallest);
+		percolateDown(smallest);
+	}
+	return;
+}
+void extract_min() {
+	swap(0, sz - 1);
+	sz--;
+	percolateDown(0);
+}
+void push(int ix, int iy, int ht) {
+	arr[sz].h = ht;
+	arr[sz].ix = ix;
+	arr[sz].iy = iy;
+	int idx = sz++;
+	while (idx && arr[(idx - 1)/2].h > arr[idx].h) {
+		swap(idx, (idx - 1)/2);
+		idx = (idx - 1) / 2;
+	}
+	return;
+}
+bool check(int x, int y, int n) {
+	if (x < 0 || y < 0 || x >= n || y >= n)
+		return 0;
+	return 1;
+}
+int max(int p, int q) {
+	if (p > q)
+		return p;
+	return q;
+}
+long long int solve(int **a, int**vst, int n) {
+	long long int res = 0;
+	while (sz) {
+		extract_min();
+		int x, y, hgt;
+		x = arr[sz].ix;
+		y = arr[sz].iy;
+		hgt = arr[sz].h;
+		for (int i = 0; i < 4; i++) {
+			int nx = x + mvx[i];
+			int ny = y + mvy[i];
+			if (check(nx, ny, n) && vst[nx][ny] == -1) {
+				int nh = a[nx][ny];
+				vst[nx][ny] = max(nh, hgt);
+				res = res + vst[nx][ny] - nh;
+				cout << "updated ht " << nx << " " << ny << " " << vst[nx][ny] << endl;
+				push(nx, ny, vst[nx][ny]);
+			}
+		}
+	}
+	return res;
+}
+int main() {
+	freopen("Text.txt", "r", stdin);
+	int t = 1, T;
+	cin >> T;
+	while (t <= T) {
+		int n;
+		cin >> n;
+		sz = 0;
+		int **a = new int*[n];
+		int **vst = new int*[n];
+		for (int i = 0; i < n; i++) {
+			a[i] = new int[n];
+			vst[i] = new int[n];
+		}
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				cin >> a[i][j];
+				vst[i][j] = -1;
+			}
+		}
+		for (int i = 0; i < n; i++) {
+			push(i, 0, a[i][0]);
+			push(i, n - 1, a[i][n - 1]);
+			vst[i][0] = a[i][0];
+			vst[i][n - 1] = a[i][n - 1];
+			vst[0][i] = a[0][i];
+			vst[n - 1][i] = a[n - 1][i];
+			if (i != 0 && i != n - 1) {
+				push(0, i, a[0][i]);
+				push(n - 1, i, a[n - 1][i]);
+			}
+		}
+		long long int res = solve(a, vst, n);
+		cout << "Case #" << t++ << ": " << res << endl;
+	}
+	return 0;
+}
+
+
+kc:
+#include<iostream>
+using namespace std;
+void swap(int &x, int &y) {
+	int z = x;
+	x = y;
+	y = z;
+	return;
+}
+int qpartition(int *a, int start, int end) {
+	int i = start;
+	int j = start - 1;
+	int pivot = a[end];
+	while (i <= end) {
+		if (pivot >= a[i])
+			swap(a[i], a[++j]);
+		i++;
+	}
+	return j;
+}
+void qsort(int *a, int start, int end) {
+	if (start >= end)
+		return;
+	int mid = qpartition(a, start, end);
+	qsort(a, start, mid - 1);
+	qsort(a, mid + 1, end);
+	return;
+}
+long long int reverseSum(int idx, int * a, int * available) {
+	long long int res = 0;
+	for (int i = 9; i >= 0; i--) {
+		if (available[i])
+			res += 1LL * a[idx++] * i;
+	}
+	return res;
+}
+int main() {
+	int t;
+	cin >> t;
+	while (t--) {
+		int n = 10;
+		long long k;
+		cin >> k;
+		int *a = new int[n];
+		int *res = new int[n];
+		int *available = new int[n];
+		for (int i = 0; i < n; i++) {
+			cin >> a[i];
+			available[i] = 1;
+		}
+		long long sum = 0, temp = 0;
+		qsort(a, 0, n-1);
+		for (int i = 0; i < n; i++)
+			cout << a[i] << " ";
+		cout << endl;
+		for (int i = 0; i < n; i++) {
+			bool flag = false;
+			for (int j = 0; j < n; j++) {
+				if (!available[j])
+					continue;
+				available[j] = 0;
+				temp = j * a[i];
+				int rvsum = reverseSum(i + 1, a, available);
+				if (sum + temp + rvsum <= k) {
+					sum += temp;
+					res[i] = j;
+					flag = 1;
+				}
+				else
+					available[j] = 1;
+				if (flag)
+					break;
+			}
+		}
+		for (int i = 0; i < n; i++)
+			cout << res[i] << " ";
+		cout << endl;
+	}
+	return 0;
+}
